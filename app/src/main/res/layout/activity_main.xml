@@ -199,7 +199,9 @@
                 android:textStyle="bold"
                 android:textColor="@color/light_blue"
                 android:textAlignment="viewEnd"
-                android:text="Add List"
+                android:visibility="gone"
+                android:id="@+id/deleteButton"
+                android:text="Delete"
                 android:layout_gravity="end"
                 tools:ignore="RtlCompat" />
         </LinearLayout>

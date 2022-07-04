@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
 import android.util.Log
+import android.view.View.VISIBLE
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -44,9 +45,25 @@ class MainActivity : AppCompatActivity() {
         reminderAdapter.onItemClick = {
             showReminder(it)
         }
+        reminderAdapter.onCheckBoxClick={
+            binding.deleteButton.visibility=VISIBLE
+            binding.deleteButton.setOnClickListener { _ ->
+                val db = DB.getInstance(this)
+                val dao = db.getMyDao()
+                CoroutineScope(Dispatchers.IO).launch {
+                    dao.deleteEntity(it)
+                    val list=dao.getAllRemainders()
+                    withContext(Dispatchers.Main){
+                        reminderAdapter.submitList(list)
+                    }
+                }
+            }
+        }
+
 
 
     }
+
 
     fun setupListeners() {
         getListReminder()

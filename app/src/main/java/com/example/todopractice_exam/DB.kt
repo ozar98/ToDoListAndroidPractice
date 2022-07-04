@@ -52,5 +52,8 @@ interface MyDao{
     @Update
     fun updateDB(reminder: Remainders)
 
+    @Query("DELETE FROM remainders WHERE id=:id")
+    fun deleteEntity(id:Int)
+
 
 }
