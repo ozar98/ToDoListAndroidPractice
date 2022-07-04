@@ -30,7 +30,7 @@ class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>
 
     override fun onBindViewHolder(holder: ReminderViewHolder, position: Int) {
         holder.name.text = listReminder[position].name
-        holder.date.text = listReminder[position].date.toString()
+        holder.date.text = listReminder[position].date
     }
 
     override fun getItemCount(): Int {
@@ -41,6 +41,7 @@ class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>
         val name: TextView = view.findViewById(R.id.reminder_name)
         val date: TextView = view.findViewById(R.id.reminder_date)
 
+
         init {
             view.findViewById<ConstraintLayout>(R.id.layout_rv).setOnClickListener {
                 onItemClick?.invoke(listReminder[adapterPosition].id)
@@ -49,6 +50,8 @@ class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>
                 .setOnCheckedChangeListener { _, isChecked ->
                     if (isChecked)
                         onCheckBoxClick?.invoke(listReminder[adapterPosition].id)
+
+
                 }
 
         }

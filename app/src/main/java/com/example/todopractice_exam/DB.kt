@@ -55,5 +55,13 @@ interface MyDao{
     @Query("DELETE FROM remainders WHERE id=:id")
     fun deleteEntity(id:Int)
 
+    @Query("SELECT COUNT(id) FROM remainders where date=:today")
+    fun countToday(today:String):Int
+
+    @Query("SELECT COUNT(id) from remainders")
+    fun countAll():Int
+
+    @Query("SELECT * FROM Remainders where date=:today")
+    fun getTodayRemainder(today: String):List<Remainders>
 
 }

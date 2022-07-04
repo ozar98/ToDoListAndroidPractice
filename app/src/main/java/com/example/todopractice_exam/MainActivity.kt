@@ -1,5 +1,6 @@
 package com.example.todopractice_exam
 
+import android.content.Intent
 import android.icu.util.LocaleData
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -11,6 +12,7 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatButton
 import com.example.todopractice_exam.databinding.ActivityMainBinding
+
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,10 +44,13 @@ class MainActivity : AppCompatActivity() {
         getListReminder()
         setupNotesActivity()
 
+        setTexts()
+
         reminderAdapter.onItemClick = {
             showReminder(it)
         }
         reminderAdapter.onCheckBoxClick={
+
             binding.deleteButton.visibility=VISIBLE
             binding.deleteButton.setOnClickListener { _ ->
                 val db = DB.getInstance(this)
@@ -59,9 +64,27 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        binding.todayButton.setOnClickListener {
+            startActivity(Intent(this, ReminderPage::class.java))
+        }
+        binding.noteButton.setOnClickListener {
+            startActivity(Intent(this, ReminderAllPage::class.java))
+        }
 
 
 
+    }
+    fun setTexts(){
+        val db = DB.getInstance(this)
+        val dao = db.getMyDao()
+        CoroutineScope(Dispatchers.IO).launch {
+            val countToday=dao.countToday("05.07.2022")
+            val countAllRemainders=dao.countAll()
+            withContext(Dispatchers.Main){
+                binding.countToday.text=countToday.toString()
+                binding.countAll.text=countAllRemainders.toString()
+            }
+        }
     }
 
 
@@ -84,7 +107,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showReminder(id: Int) {
-        Log.d("TAG_test", "showReminder: $id")
         val db = DB.getInstance(this)
         val dao = db.getMyDao()
         notesActivity = BottomSheetDialog(this)
@@ -125,6 +147,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             notesActivity?.dismiss()
+            setTexts()
         }
     }
 
@@ -134,10 +157,11 @@ class MainActivity : AppCompatActivity() {
         val dao = db.getMyDao()
         notesActivity = BottomSheetDialog(this)
         notesActivity?.setContentView(R.layout.create_reminder_page)
-        binding.noteButton.setOnClickListener {
+        binding.newReminder.setOnClickListener {
             notesActivity?.show()
             notesActivity?.findViewById<TextView>(R.id.submit)?.setOnClickListener {
                 insertEntityDB(dao)
+                setTexts()
             }
         }
     }
