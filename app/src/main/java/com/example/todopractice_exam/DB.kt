@@ -29,7 +29,7 @@ abstract class DB: RoomDatabase() {
 
 @Entity
 data class Remainders(
-    @PrimaryKey(autoGenerate = true) val id:Int,
+    @PrimaryKey(autoGenerate = true) val id: Int,
     var name:String,
     var description: String,
     var date:String,//Date
@@ -41,10 +41,10 @@ data class Remainders(
 @Dao
 interface MyDao{
     @Query("SELECT * FROM remainders")
-    fun getAllRemainders(): List<Remainders>
+    suspend fun getAllRemainders(): List<Remainders>
 
     @Query("SELECT * FROM remainders WHERE id like :chosenID")
-    fun getChosenReminder(chosenID: Int):List<Remainders>
+    fun getChosenReminder(chosenID: Int):Remainders
 
     @Insert
     fun insertNewRemainder(reminder: Remainders)
@@ -63,5 +63,11 @@ interface MyDao{
 
     @Query("SELECT * FROM Remainders where date=:today")
     fun getTodayRemainder(today: String):List<Remainders>
+
+    @Query("SELECT * FROM Remainders ORDER BY CASE WHEN priority=:priority THEN 1 WHEN priority= 'Medium' THEN 2 ELSE 3 END ")
+    suspend fun getHighPriorityFirst(priority:String="High"):List<Remainders>
+
+    @Query("SELECT COUNT(id) from remainders where priority=:priority")
+    fun countHighPriorityReminder(priority: String="High"):Int
 
 }

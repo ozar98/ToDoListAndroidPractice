@@ -11,7 +11,9 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatButton
+import androidx.lifecycle.ViewModelProvider
 import com.example.todopractice_exam.databinding.ActivityMainBinding
+import com.example.todopractice_exam.databinding.CreateReminderPageBinding
 
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +26,8 @@ import java.util.*
 import kotlin.math.log
 
 class MainActivity : AppCompatActivity() {
+    private var _bindingBS:CreateReminderPageBinding?=null
+    private val bindingBS get()=_bindingBS!!
 
     private var _binding: ActivityMainBinding? = null
     private val binding get() = _binding!!
@@ -32,15 +36,27 @@ class MainActivity : AppCompatActivity() {
 
     private val reminderAdapter = ReminderAdapter()
 
+    private lateinit var db: DB
+    private lateinit var dao: MyDao
+
+    // ViewModel для данной активити
+    private lateinit var viewModel: MainViewModel
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
+        _bindingBS=CreateReminderPageBinding.inflate(layoutInflater)
+        db = DB.getInstance(this)
+        dao = db.getMyDao()
+
+        notesActivity = BottomSheetDialog(this)
+
+        notesActivity?.setContentView(bindingBS.root)
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+
         setContentView(binding.root)
-
         binding.remindersRv.adapter = reminderAdapter
-
-        setupListeners()
         getListReminder()
         setupNotesActivity()
 
@@ -53,52 +69,51 @@ class MainActivity : AppCompatActivity() {
 
             binding.deleteButton.visibility=VISIBLE
             binding.deleteButton.setOnClickListener { _ ->
-                val db = DB.getInstance(this)
-                val dao = db.getMyDao()
                 CoroutineScope(Dispatchers.IO).launch {
-                    dao.deleteEntity(it)
-                    val list=dao.getAllRemainders()
+                    viewModel.deleteReminder(it)
+                    val listRemainders=viewModel.getAllReminders()
                     withContext(Dispatchers.Main){
-                        reminderAdapter.submitList(list)
+                        reminderAdapter.submitList(listRemainders)
                     }
                 }
             }
         }
+        setButtonsClick()
+
+
+
+    }
+    fun setButtonsClick(){
         binding.todayButton.setOnClickListener {
             startActivity(Intent(this, ReminderPage::class.java))
         }
         binding.noteButton.setOnClickListener {
             startActivity(Intent(this, ReminderAllPage::class.java))
         }
-
-
-
+        binding.priorityButton.setOnClickListener {
+            startActivity(Intent(this, ReminderHighPage::class.java))
+        }
     }
+
     fun setTexts(){
-        val db = DB.getInstance(this)
-        val dao = db.getMyDao()
         CoroutineScope(Dispatchers.IO).launch {
-            val countToday=dao.countToday("05.07.2022")
-            val countAllRemainders=dao.countAll()
+            val countToday=viewModel.countTodayReminders()
+            val countAllRemainders=viewModel.countAllReminders()
             withContext(Dispatchers.Main){
-                binding.countToday.text=countToday.toString()
-                binding.countAll.text=countAllRemainders.toString()
+                binding.countToday.setText(countToday.toString())
+                binding.countAll.setText(countAllRemainders.toString())
             }
         }
     }
 
 
-    fun setupListeners() {
-        getListReminder()
 
-    }
 
     private fun getListReminder() {
-        val db = DB.getInstance(this)
-        val dao = db.getMyDao()
+
         CoroutineScope(Dispatchers.IO).launch {
 
-            val listOfReminders = dao.getAllRemainders()
+            val listOfReminders = viewModel.getAllReminders()
             withContext(Dispatchers.Main) {
                 reminderAdapter.submitList(listOfReminders)
             }
@@ -107,45 +122,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showReminder(id: Int) {
-        val db = DB.getInstance(this)
-        val dao = db.getMyDao()
-        notesActivity = BottomSheetDialog(this)
-        notesActivity?.setContentView(R.layout.create_reminder_page)
         notesActivity?.show()
         CoroutineScope(Dispatchers.IO).launch {
-            val chosenReminder = dao.getChosenReminder(id)
+            val chosenReminder = viewModel.getChosenReminder(id)
             withContext(Dispatchers.Main) {
-                notesActivity?.findViewById<EditText>(R.id.name_edit_text)
-                    ?.setText(chosenReminder[0].name)
-                notesActivity?.findViewById<EditText>(R.id.description_edit_text)
-                    ?.setText(chosenReminder[0].description)
-                notesActivity?.findViewById<EditText>(R.id.date_edit_text)
-                    ?.setText(chosenReminder[0].date)
-                notesActivity?.findViewById<EditText>(R.id.time_edit_text)
-                    ?.setText(chosenReminder[0].time)
-                notesActivity?.findViewById<EditText>(R.id.location_edit_text)
-                    ?.setText(chosenReminder[0].location)
-                notesActivity?.findViewById<EditText>(R.id.priority_edit_text)
-                    ?.setText(chosenReminder[0].priority)
+                bindingBS.nameEditText.setText(chosenReminder.name)
+                bindingBS.descriptionEditText.setText(chosenReminder.description)
+                bindingBS.dateEditText.setText(chosenReminder.date)
+                bindingBS.timeEditText.setText(chosenReminder.time)
+                bindingBS.locationEditText.setText(chosenReminder.location)
+                bindingBS.priorityEditText.setText(chosenReminder.priority)
             }
         }
-        notesActivity?.findViewById<TextView>(R.id.submit)?.setOnClickListener {
+        bindingBS.submit.setText("Edit reminder")
+        bindingBS.submit.setOnClickListener {
             notesActivity?.show()
-            notesActivity?.findViewById<TextView>(R.id.submit)?.text = "Edit remainder"
-            val name = notesActivity?.findViewById<EditText>(R.id.name_edit_text)?.text.toString()
-            val description = notesActivity?.findViewById<EditText>(R.id.description_edit_text)?.text.toString()
-            val date = notesActivity?.findViewById<EditText>(R.id.date_edit_text)?.text.toString()
-            val time = notesActivity?.findViewById<EditText>(R.id.time_edit_text)?.text.toString()
-            val location = notesActivity?.findViewById<EditText>(R.id.location_edit_text)?.text.toString()
-            val priority = notesActivity?.findViewById<EditText>(R.id.priority_edit_text)?.text.toString()
+            val reminder=setDataToReminder()
             CoroutineScope(Dispatchers.IO).launch {
-                dao.updateDB(Remainders(id, name, description, date, time, location, priority))
-                val listOfReminders = dao.getAllRemainders()
+                viewModel.updateReminder(reminder)
+                val listOfReminders = viewModel.getAllReminders()
                 withContext(Dispatchers.Main) {
                     reminderAdapter.submitList(listOfReminders)
                 }
             }
-
             notesActivity?.dismiss()
             setTexts()
         }
@@ -153,36 +152,40 @@ class MainActivity : AppCompatActivity() {
 
 
     fun setupNotesActivity() {
-        val db = DB.getInstance(this)
-        val dao = db.getMyDao()
-        notesActivity = BottomSheetDialog(this)
-        notesActivity?.setContentView(R.layout.create_reminder_page)
+
         binding.newReminder.setOnClickListener {
+            bindingBS.nameEditText.setText("")
+            bindingBS.descriptionEditText.setText("")
+            bindingBS.dateEditText.setText("")
+            bindingBS.timeEditText.setText("")
+            bindingBS.locationEditText.setText("")
+            bindingBS.priorityEditText.setText("")
             notesActivity?.show()
-            notesActivity?.findViewById<TextView>(R.id.submit)?.setOnClickListener {
-                insertEntityDB(dao)
+            bindingBS.submit.setOnClickListener {
+                insertEntityDB()
                 setTexts()
             }
         }
     }
 
-    fun insertEntityDB(dao: MyDao) {
-        val name = notesActivity?.findViewById<EditText>(R.id.name_edit_text)?.text.toString()
-        val description =
-            notesActivity?.findViewById<EditText>(R.id.description_edit_text)?.text.toString()
-        val date = notesActivity?.findViewById<EditText>(R.id.date_edit_text)?.text.toString()
-        val time = notesActivity?.findViewById<EditText>(R.id.time_edit_text)?.text.toString()
-        val location =
-            notesActivity?.findViewById<EditText>(R.id.location_edit_text)?.text.toString()
-        val priority =
-            notesActivity?.findViewById<EditText>(R.id.priority_edit_text)?.text.toString()
+    fun insertEntityDB() {
+        val reminder=setDataToReminder()
         CoroutineScope(Dispatchers.IO).launch {
-            dao.insertNewRemainder(Remainders(0, name, description, date, time, location, priority))
-            val listOfReminders = dao.getAllRemainders()
+            viewModel.inserNewReminder(reminder)
+            val listOfReminders = viewModel.getAllReminders()
             withContext(Dispatchers.Main) {
                 reminderAdapter.submitList(listOfReminders)
             }
 
         }
+    }
+    fun setDataToReminder(): Remainders{
+        val name = bindingBS.nameEditText.text.toString()
+        val description = bindingBS.descriptionEditText.text.toString()
+        val date = bindingBS.dateEditText.text.toString()
+        val time = bindingBS.timeEditText.text.toString()
+        val location = bindingBS.locationEditText.text.toString()
+        val priority = bindingBS.priorityEditText.text.toString()
+        return Remainders(0,name, description, date, time, location, priority)
     }
 }
