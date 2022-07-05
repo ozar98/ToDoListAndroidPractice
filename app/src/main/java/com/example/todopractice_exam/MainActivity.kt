@@ -36,9 +36,6 @@ class MainActivity : AppCompatActivity() {
 
     private val reminderAdapter = ReminderAdapter()
 
-    private lateinit var db: DB
-    private lateinit var dao: MyDao
-
     // ViewModel для данной активити
     private lateinit var viewModel: MainViewModel
 
@@ -47,20 +44,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
         _bindingBS=CreateReminderPageBinding.inflate(layoutInflater)
-        db = DB.getInstance(this)
-        dao = db.getMyDao()
 
         notesActivity = BottomSheetDialog(this)
-
         notesActivity?.setContentView(bindingBS.root)
+
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
         setContentView(binding.root)
         binding.remindersRv.adapter = reminderAdapter
         getListReminder()
-        setupNotesActivity()
 
-        setTexts()
 
         reminderAdapter.onItemClick = {
             showReminder(it)
@@ -74,11 +67,13 @@ class MainActivity : AppCompatActivity() {
                     val listRemainders=viewModel.getAllReminders()
                     withContext(Dispatchers.Main){
                         reminderAdapter.submitList(listRemainders)
+                        setTexts()
                     }
                 }
             }
         }
         setButtonsClick()
+        setTexts()
 
 
 
@@ -93,15 +88,21 @@ class MainActivity : AppCompatActivity() {
         binding.priorityButton.setOnClickListener {
             startActivity(Intent(this, ReminderHighPage::class.java))
         }
+        binding.newReminder.setOnClickListener {
+            bindingBS.submit.text="Set up reminder"
+            setupNewReminder()
+        }
     }
 
     fun setTexts(){
         CoroutineScope(Dispatchers.IO).launch {
             val countToday=viewModel.countTodayReminders()
             val countAllRemainders=viewModel.countAllReminders()
+            val countHighPriority=viewModel.countHighPriorityReminders()
             withContext(Dispatchers.Main){
                 binding.countToday.setText(countToday.toString())
                 binding.countAll.setText(countAllRemainders.toString())
+                binding.countPriority.setText(countHighPriority.toString())
             }
         }
     }
@@ -116,6 +117,7 @@ class MainActivity : AppCompatActivity() {
             val listOfReminders = viewModel.getAllReminders()
             withContext(Dispatchers.Main) {
                 reminderAdapter.submitList(listOfReminders)
+                setTexts()
             }
 
         }
@@ -134,7 +136,7 @@ class MainActivity : AppCompatActivity() {
                 bindingBS.priorityEditText.setText(chosenReminder.priority)
             }
         }
-        bindingBS.submit.setText("Edit reminder")
+        bindingBS.submit.text = "Edit reminder"
         bindingBS.submit.setOnClickListener {
             notesActivity?.show()
             val reminder=setDataToReminder()
@@ -151,9 +153,9 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    fun setupNotesActivity() {
+    fun setupNewReminder() {
 
-        binding.newReminder.setOnClickListener {
+
             bindingBS.nameEditText.setText("")
             bindingBS.descriptionEditText.setText("")
             bindingBS.dateEditText.setText("")
@@ -163,9 +165,11 @@ class MainActivity : AppCompatActivity() {
             notesActivity?.show()
             bindingBS.submit.setOnClickListener {
                 insertEntityDB()
+
                 setTexts()
+
             }
-        }
+
     }
 
     fun insertEntityDB() {
