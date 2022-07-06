@@ -26,7 +26,7 @@ class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>
     }
 
     var onItemClick: ((Int) -> Unit)? = null
-    var onCheckBoxClick: ((Int) -> Unit)? = null
+    var onCheckBoxClick: ((Int,Boolean) -> Unit)? = null
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReminderViewHolder {
@@ -65,9 +65,7 @@ class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>
             }
             view.findViewById<CheckBox>(R.id.radio_button)
                 .setOnCheckedChangeListener { _, isChecked ->
-                    if (isChecked)
-                        onCheckBoxClick?.invoke(listReminder[adapterPosition].id)
-
+                    onCheckBoxClick?.invoke(listReminder[adapterPosition].id,isChecked)
 
                 }
 

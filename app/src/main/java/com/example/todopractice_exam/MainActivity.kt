@@ -9,11 +9,13 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View.GONE
 
 import android.view.View.VISIBLE
 import androidx.annotation.RequiresApi
 
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.todopractice_exam.databinding.ActivityMainBinding
 import com.example.todopractice_exam.databinding.CreateReminderPageBinding
 
@@ -41,18 +43,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: MainViewModel
 
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
         _bindingBS = CreateReminderPageBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         notesActivity = BottomSheetDialog(this)
         notesActivity?.setContentView(bindingBS.root)
 
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
-        setContentView(binding.root)
         binding.remindersRv.adapter = reminderAdapter
         getListReminder()
 
@@ -60,12 +61,16 @@ class MainActivity : AppCompatActivity() {
         reminderAdapter.onItemClick = {
             showReminder(it)
         }
-        reminderAdapter.onCheckBoxClick = {
 
-            binding.deleteButton.visibility = VISIBLE
-            binding.deleteButton.setOnClickListener { _ ->
-                CoroutineScope(Dispatchers.IO).launch {
-                    viewModel.deleteReminder(it)
+        var counterSelected = 0
+        reminderAdapter.onCheckBoxClick = { id, isChecked ->
+            counterSelected += if (isChecked) 1 else -1
+
+            binding.deleteButton.visibility = if (counterSelected == 1) VISIBLE else GONE
+
+                binding.deleteButton.setOnClickListener {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    viewModel.deleteReminder(id)
                     val listRemainders = viewModel.getAllReminders()
                     withContext(Dispatchers.Main) {
                         reminderAdapter.submitList(listRemainders)
@@ -98,16 +103,24 @@ class MainActivity : AppCompatActivity() {
         }
         bindingBS.chooseDate.setOnClickListener {
             val calendar = Calendar.getInstance()
-            DatePickerDialog(this, { _, year, month, day ->
-                bindingBS.dateEditText.text="${if (day < 10) "0$day" else day}.${if ((month+1) < 10) "0${month+1}" else month+1}.$year"
-            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+            DatePickerDialog(
+                this,
+                { _, year, month, day ->
+                    bindingBS.dateEditText.text =
+                        "${if (day < 10) "0$day" else day}.${if ((month + 1) < 10) "0${month + 1}" else month + 1}.$year"
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+            ).show()
         }
         bindingBS.chooseTime.setOnClickListener {
             val calendar = Calendar.getInstance()
-            TimePickerDialog(this, {_,hour, minute->
+            TimePickerDialog(this, { _, hour, minute ->
 
-                bindingBS.timeEditText.text="${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
-            }, calendar.get(Calendar.HOUR_OF_DAY),calendar.get(Calendar.MINUTE), true).show()
+                bindingBS.timeEditText.text =
+                    "${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
         }
 
     }
@@ -125,7 +138,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
 
     private fun getListReminder() {
@@ -147,19 +159,19 @@ class MainActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val chosenReminder = viewModel.getChosenReminder(id)
             withContext(Dispatchers.Main) {
-                val calendar=Calendar.getInstance()
-                calendar.timeInMillis=chosenReminder.date
+                val calendar = Calendar.getInstance()
+                calendar.timeInMillis = chosenReminder.date
 
-                val day=calendar.get(Calendar.DAY_OF_MONTH)
-                val month=calendar.get(Calendar.MONTH)
-                val year=calendar.get(Calendar.YEAR)
-                val hour=calendar.get(Calendar.HOUR_OF_DAY)
-                val minute=calendar.get(Calendar.MINUTE)
+                val day = calendar.get(Calendar.DAY_OF_MONTH)
+                val month = calendar.get(Calendar.MONTH)
+                val year = calendar.get(Calendar.YEAR)
+                val hour = calendar.get(Calendar.HOUR_OF_DAY)
+                val minute = calendar.get(Calendar.MINUTE)
 
                 bindingBS.nameEditText.setText(chosenReminder.name)
                 bindingBS.descriptionEditText.setText(chosenReminder.description)
-                bindingBS.dateEditText.setText("${if (day < 10) "0$day" else day}.${if ((month+1) < 10) "0${month+1}" else month+1}.$year")
-                bindingBS.timeEditText.setText("${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}")
+                bindingBS.dateEditText.text = "${if (day < 10) "0$day" else day}.${if ((month + 1) < 10) "0${month + 1}" else month + 1}.$year"
+                bindingBS.timeEditText.text = "${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
                 bindingBS.locationEditText.setText(chosenReminder.location)
                 bindingBS.priorityEditText.setText(chosenReminder.priority)
             }
@@ -183,8 +195,8 @@ class MainActivity : AppCompatActivity() {
     private fun setupNewReminder() {
         bindingBS.nameEditText.setText("")
         bindingBS.descriptionEditText.setText("")
-        bindingBS.dateEditText.setText("")
-        bindingBS.timeEditText.setText("")
+        bindingBS.dateEditText.text = ""
+        bindingBS.timeEditText.text = ""
         bindingBS.locationEditText.setText("")
         bindingBS.priorityEditText.setText("")
         notesActivity?.show()
@@ -208,22 +220,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setDataToReminder(id: Int): Remainders {
-
-        val name = bindingBS.nameEditText.text.toString()
-        val description = bindingBS.descriptionEditText.text.toString()
         val date = bindingBS.dateEditText.text.toString()
         val time = bindingBS.timeEditText.text.toString()
-        val location = bindingBS.locationEditText.text.toString()
-        val priority = bindingBS.priorityEditText.text.toString()
 
         val calendar = Calendar.getInstance()
         calendar.set(
             date.substring(date.length - 4).toInt(),
-            date.substring(3, 5).toInt()-1,
+            date.substring(3, 5).toInt() - 1,
             date.substring(0, 2).toInt(),
-            time.substring(0,2).toInt(),
+            time.substring(0, 2).toInt(),
             time.substring(3).toInt()
         )
-        return Remainders(id, name, description, calendar.timeInMillis, location, priority)
+
+        return Remainders(
+            id,
+            bindingBS.nameEditText.text.toString(),
+            bindingBS.descriptionEditText.text.toString(),
+            calendar.timeInMillis,
+            bindingBS.locationEditText.text.toString(),
+            bindingBS.priorityEditText.text.toString())
     }
 }
