@@ -16,9 +16,6 @@ class ReminderHighPage : AppCompatActivity() {
     private var _binding: ActivityReminderPageBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var db: DB
-    private lateinit var dao: MyDao
-
     private lateinit var viewModel: ReminderHighPageViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,8 +23,6 @@ class ReminderHighPage : AppCompatActivity() {
         _binding = ActivityReminderPageBinding.inflate(layoutInflater)
         setContentView(binding.root)
         viewModel = ViewModelProvider(this)[ReminderHighPageViewModel::class.java]
-        db = DB.getInstance(this)
-        dao = db.getMyDao()
         binding.remindersRv.adapter = reminderAdapter
 
         CoroutineScope(Dispatchers.IO).launch {

@@ -1,16 +1,18 @@
 package com.example.todopractice_exam
 
+import android.annotation.SuppressLint
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Intent
-import android.icu.util.LocaleData
+import android.os.Build
+
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.text.Editable
 import android.util.Log
+
 import android.view.View.VISIBLE
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import androidx.appcompat.widget.AppCompatButton
+import androidx.annotation.RequiresApi
+
 import androidx.lifecycle.ViewModelProvider
 import com.example.todopractice_exam.databinding.ActivityMainBinding
 import com.example.todopractice_exam.databinding.CreateReminderPageBinding
@@ -20,14 +22,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.sql.Time
 import java.time.LocalDate
 import java.util.*
-import kotlin.math.log
+
 
 class MainActivity : AppCompatActivity() {
-    private var _bindingBS:CreateReminderPageBinding?=null
-    private val bindingBS get()=_bindingBS!!
+    private var _bindingBS: CreateReminderPageBinding? = null
+    private val bindingBS get() = _bindingBS!!
 
     private var _binding: ActivityMainBinding? = null
     private val binding get() = _binding!!
@@ -40,10 +41,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: MainViewModel
 
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
-        _bindingBS=CreateReminderPageBinding.inflate(layoutInflater)
+        _bindingBS = CreateReminderPageBinding.inflate(layoutInflater)
 
         notesActivity = BottomSheetDialog(this)
         notesActivity?.setContentView(bindingBS.root)
@@ -58,14 +60,14 @@ class MainActivity : AppCompatActivity() {
         reminderAdapter.onItemClick = {
             showReminder(it)
         }
-        reminderAdapter.onCheckBoxClick={
+        reminderAdapter.onCheckBoxClick = {
 
-            binding.deleteButton.visibility=VISIBLE
+            binding.deleteButton.visibility = VISIBLE
             binding.deleteButton.setOnClickListener { _ ->
                 CoroutineScope(Dispatchers.IO).launch {
                     viewModel.deleteReminder(it)
-                    val listRemainders=viewModel.getAllReminders()
-                    withContext(Dispatchers.Main){
+                    val listRemainders = viewModel.getAllReminders()
+                    withContext(Dispatchers.Main) {
                         reminderAdapter.submitList(listRemainders)
                         setTexts()
                     }
@@ -76,9 +78,11 @@ class MainActivity : AppCompatActivity() {
         setTexts()
 
 
-
     }
-    fun setButtonsClick(){
+
+
+    @SuppressLint("SetTextI18n")
+    fun setButtonsClick() {
         binding.todayButton.setOnClickListener {
             startActivity(Intent(this, ReminderPage::class.java))
         }
@@ -89,24 +93,38 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, ReminderHighPage::class.java))
         }
         binding.newReminder.setOnClickListener {
-            bindingBS.submit.text="Set up reminder"
+            bindingBS.submit.text = "Set up reminder"
             setupNewReminder()
         }
+        bindingBS.chooseDate.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            DatePickerDialog(this, { _, year, month, day ->
+                bindingBS.dateEditText.text="${if (day < 10) "0$day" else day}.${if ((month+1) < 10) "0${month+1}" else month+1}.$year"
+            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+        }
+        bindingBS.chooseTime.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            TimePickerDialog(this, {_,hour, minute->
+
+                bindingBS.timeEditText.text="${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
+            }, calendar.get(Calendar.HOUR_OF_DAY),calendar.get(Calendar.MINUTE), true).show()
+        }
+
     }
 
-    fun setTexts(){
+
+    private fun setTexts() {
         CoroutineScope(Dispatchers.IO).launch {
-            val countToday=viewModel.countTodayReminders()
-            val countAllRemainders=viewModel.countAllReminders()
-            val countHighPriority=viewModel.countHighPriorityReminders()
-            withContext(Dispatchers.Main){
-                binding.countToday.setText(countToday.toString())
-                binding.countAll.setText(countAllRemainders.toString())
-                binding.countPriority.setText(countHighPriority.toString())
+            val countToday = viewModel.countTodayReminders()
+            val countAllRemainders = viewModel.countAllReminders()
+            val countHighPriority = viewModel.countHighPriorityReminders()
+            withContext(Dispatchers.Main) {
+                binding.countToday.text = countToday.toString()
+                binding.countAll.text = countAllRemainders.toString()
+                binding.countPriority.text = countHighPriority.toString()
             }
         }
     }
-
 
 
 
@@ -123,59 +141,64 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     fun showReminder(id: Int) {
         notesActivity?.show()
         CoroutineScope(Dispatchers.IO).launch {
             val chosenReminder = viewModel.getChosenReminder(id)
             withContext(Dispatchers.Main) {
+                val calendar=Calendar.getInstance()
+                calendar.timeInMillis=chosenReminder.date
+
+                val day=calendar.get(Calendar.DAY_OF_MONTH)
+                val month=calendar.get(Calendar.MONTH)
+                val year=calendar.get(Calendar.YEAR)
+                val hour=calendar.get(Calendar.HOUR_OF_DAY)
+                val minute=calendar.get(Calendar.MINUTE)
+
                 bindingBS.nameEditText.setText(chosenReminder.name)
                 bindingBS.descriptionEditText.setText(chosenReminder.description)
-                bindingBS.dateEditText.setText(chosenReminder.date)
-                bindingBS.timeEditText.setText(chosenReminder.time)
+                bindingBS.dateEditText.setText("${if (day < 10) "0$day" else day}.${if ((month+1) < 10) "0${month+1}" else month+1}.$year")
+                bindingBS.timeEditText.setText("${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}")
                 bindingBS.locationEditText.setText(chosenReminder.location)
                 bindingBS.priorityEditText.setText(chosenReminder.priority)
             }
         }
         bindingBS.submit.text = "Edit reminder"
         bindingBS.submit.setOnClickListener {
-            notesActivity?.show()
-            val reminder=setDataToReminder()
+            val reminder = setDataToReminder(id)
             CoroutineScope(Dispatchers.IO).launch {
                 viewModel.updateReminder(reminder)
                 val listOfReminders = viewModel.getAllReminders()
                 withContext(Dispatchers.Main) {
                     reminderAdapter.submitList(listOfReminders)
+                    notesActivity?.dismiss()
                 }
             }
-            notesActivity?.dismiss()
             setTexts()
         }
     }
 
 
-    fun setupNewReminder() {
-
-
-            bindingBS.nameEditText.setText("")
-            bindingBS.descriptionEditText.setText("")
-            bindingBS.dateEditText.setText("")
-            bindingBS.timeEditText.setText("")
-            bindingBS.locationEditText.setText("")
-            bindingBS.priorityEditText.setText("")
-            notesActivity?.show()
-            bindingBS.submit.setOnClickListener {
-                insertEntityDB()
-
-                setTexts()
-
-            }
+    private fun setupNewReminder() {
+        bindingBS.nameEditText.setText("")
+        bindingBS.descriptionEditText.setText("")
+        bindingBS.dateEditText.setText("")
+        bindingBS.timeEditText.setText("")
+        bindingBS.locationEditText.setText("")
+        bindingBS.priorityEditText.setText("")
+        notesActivity?.show()
+        bindingBS.submit.setOnClickListener {
+            insertEntityDB()
+            setTexts()
+        }
 
     }
 
-    fun insertEntityDB() {
-        val reminder=setDataToReminder()
+    private fun insertEntityDB() {
+        val reminder = setDataToReminder(0)
         CoroutineScope(Dispatchers.IO).launch {
-            viewModel.inserNewReminder(reminder)
+            viewModel.insertNewReminder(reminder)
             val listOfReminders = viewModel.getAllReminders()
             withContext(Dispatchers.Main) {
                 reminderAdapter.submitList(listOfReminders)
@@ -183,13 +206,24 @@ class MainActivity : AppCompatActivity() {
 
         }
     }
-    fun setDataToReminder(): Remainders{
+
+    private fun setDataToReminder(id: Int): Remainders {
+
         val name = bindingBS.nameEditText.text.toString()
         val description = bindingBS.descriptionEditText.text.toString()
         val date = bindingBS.dateEditText.text.toString()
         val time = bindingBS.timeEditText.text.toString()
         val location = bindingBS.locationEditText.text.toString()
         val priority = bindingBS.priorityEditText.text.toString()
-        return Remainders(0,name, description, date, time, location, priority)
+
+        val calendar = Calendar.getInstance()
+        calendar.set(
+            date.substring(date.length - 4).toInt(),
+            date.substring(3, 5).toInt()-1,
+            date.substring(0, 2).toInt(),
+            time.substring(0,2).toInt(),
+            time.substring(3).toInt()
+        )
+        return Remainders(id, name, description, calendar.timeInMillis, location, priority)
     }
 }

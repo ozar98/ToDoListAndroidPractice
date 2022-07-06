@@ -2,6 +2,7 @@ package com.example.todopractice_exam
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.lifecycle.ViewModelProvider
 import com.example.todopractice_exam.databinding.ActivityMainBinding
 import com.example.todopractice_exam.databinding.ActivityReminderPageBinding
 import kotlinx.coroutines.CoroutineScope
@@ -16,20 +17,22 @@ class ReminderPage : AppCompatActivity() {
     private var _binding: ActivityReminderPageBinding? = null
     private val binding get() = _binding!!
 
+    private lateinit var viewModel: ReminderPageViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding=ActivityReminderPageBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        viewModel = ViewModelProvider(this)[ReminderPageViewModel::class.java]
+
         binding.remindersRv.adapter = reminderAdapter
         getListReminder()
     }
     private fun getListReminder() {
-        val db = DB.getInstance(this)
-        val dao = db.getMyDao()
         CoroutineScope(Dispatchers.IO).launch {
 
-            val listOfReminders = dao.getTodayRemainder("05.07.2022")
+            val listOfReminders = viewModel.getTodayReminders()
             withContext(Dispatchers.Main) {
                 reminderAdapter.submitList(listOfReminders)
             }

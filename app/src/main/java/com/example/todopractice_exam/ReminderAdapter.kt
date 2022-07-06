@@ -1,13 +1,20 @@
 package com.example.todopractice_exam
 
+import android.graphics.Paint
+import android.os.Build
+import android.text.Html
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
-import android.widget.RadioButton
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>() {
 
@@ -28,9 +35,19 @@ class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>
         )
     }
 
+
     override fun onBindViewHolder(holder: ReminderViewHolder, position: Int) {
         holder.name.text = listReminder[position].name
-        holder.date.text = listReminder[position].date
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = listReminder[position].date
+        holder.date.text = "${calendar.get(Calendar.DAY_OF_MONTH)}.${calendar.get(Calendar.MONTH)}.${calendar.get(Calendar.YEAR)}"
+
+        Log.d("TAG_test", "${listReminder[position].date}-${today()}")
+        @RequiresApi(Build.VERSION_CODES.N)
+        if (listReminder[position].date < today()) {
+            holder.name.text = Html.fromHtml("<strike>${holder.name.text}</strike>", Html.FROM_HTML_MODE_LEGACY)
+        }
+
     }
 
     override fun getItemCount(): Int {
