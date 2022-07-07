@@ -12,24 +12,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-
-class ReminderHighPageViewModel(application: Application): AndroidViewModel(application) {
-    private val db = DB.getInstance(application)
-    private val dao = db.getMyDao()
-
-    suspend fun getHighPriorityListReminder(): List<Remainders> {
-        return dao.getHighPriorityFirst()
-    }
-}
-class ReminderAllPageViewModel(application: Application):AndroidViewModel(application){
-    private val db = DB.getInstance(application)
-    private val dao = db.getMyDao()
-
-    suspend fun getAllReminders():List<Remainders>{
-        return dao.getAllRemainders()
-    }
-}
-
 class ReminderPageViewModel(application: Application):AndroidViewModel(application){
     private val db = DB.getInstance(application)
     private val dao = db.getMyDao()
@@ -37,6 +19,28 @@ class ReminderPageViewModel(application: Application):AndroidViewModel(applicati
 
     suspend fun getTodayReminders():List<Remainders>{
         return dao.getTodayRemainder(today())
+    }
+    suspend fun getHighPriorityListReminder(): List<Remainders> {
+        return dao.getHighPriorityFirst()
+    }
+
+    suspend fun getChosenReminder(id: Int): Remainders {
+        return dao.getChosenReminder(id)
+    }
+    suspend fun getAllReminders():List<Remainders>{
+        return dao.getAllRemainders()
+    }
+    suspend fun updateReminder(reminder: Remainders){
+        return dao.updateDB(reminder)
+    }
+    suspend fun deleteReminder(id: Int){
+        return dao.deleteEntity(id)
+    }
+    suspend fun insertNewReminder(reminder:Remainders){
+        return dao.insertNewRemainder(reminder)
+    }
+    suspend fun getHighPriority():List<Remainders>{
+        return dao.getHighPriority("High")
     }
 }
 
@@ -62,6 +66,9 @@ class MainViewModel(application: Application):AndroidViewModel(application){
     suspend fun getTodayReminders():List<Remainders>{
         return dao.getTodayRemainder(today())
     }
+    suspend fun getChosenReminder(id: Int): Remainders {
+        return dao.getChosenReminder(id)
+    }
     suspend fun countAllReminders():Int{
         return dao.countAll()
     }
@@ -75,9 +82,7 @@ class MainViewModel(application: Application):AndroidViewModel(application){
     }
 
 
-    suspend fun getChosenReminder(id: Int): Remainders {
-        return dao.getChosenReminder(id)
-    }
+
 
     suspend fun updateReminder(reminder: Remainders){
         return dao.updateDB(reminder)

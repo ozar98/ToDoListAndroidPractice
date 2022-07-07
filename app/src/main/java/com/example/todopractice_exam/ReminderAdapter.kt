@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -42,7 +43,6 @@ class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>
         calendar.timeInMillis = listReminder[position].date
         holder.date.text = "${calendar.get(Calendar.DAY_OF_MONTH)}.${calendar.get(Calendar.MONTH)}.${calendar.get(Calendar.YEAR)}"
 
-        Log.d("TAG_test", "${listReminder[position].date}-${today()}")
         @RequiresApi(Build.VERSION_CODES.N)
         if (listReminder[position].date < today()) {
             holder.name.text = Html.fromHtml("<strike>${holder.name.text}</strike>", Html.FROM_HTML_MODE_LEGACY)
@@ -59,8 +59,12 @@ class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>
         val date: TextView = view.findViewById(R.id.reminder_date)
 
 
+
         init {
             view.findViewById<ConstraintLayout>(R.id.layout_rv).setOnClickListener {
+                onItemClick?.invoke(listReminder[adapterPosition].id)
+            }
+            view.findViewById<ImageButton>(R.id.info).setOnClickListener {
                 onItemClick?.invoke(listReminder[adapterPosition].id)
             }
             view.findViewById<CheckBox>(R.id.radio_button)

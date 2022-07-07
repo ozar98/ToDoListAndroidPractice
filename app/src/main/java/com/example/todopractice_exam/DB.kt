@@ -61,6 +61,9 @@ interface MyDao {
     @Query("SELECT * FROM Remainders where date=:today")
     fun getTodayRemainder(today: Long): List<Remainders>
 
+    @Query("SELECT * FROM Remainders where priority=:priority")
+    fun getHighPriority(priority: String="High"):List<Remainders>
+
     @Query("SELECT * FROM Remainders ORDER BY CASE WHEN priority=:priority THEN 1 WHEN priority= 'Medium' THEN 2 ELSE 3 END ")
     suspend fun getHighPriorityFirst(priority: String = "High"): List<Remainders>
 

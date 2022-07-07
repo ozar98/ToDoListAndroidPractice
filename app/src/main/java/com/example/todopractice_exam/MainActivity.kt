@@ -88,15 +88,25 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     fun setButtonsClick() {
+        val listReminderCategory= listOf<String>("Today's ","All ","High Priority ")
         binding.todayButton.setOnClickListener {
-            startActivity(Intent(this, ReminderPage::class.java))
+
+            val intent=Intent(this, ReminderPage::class.java)
+            intent.putExtra("TITLE", listReminderCategory[0])
+            startActivity(intent)
         }
         binding.noteButton.setOnClickListener {
-            startActivity(Intent(this, ReminderAllPage::class.java))
+            val intent=Intent(this, ReminderPage::class.java)
+            intent.putExtra("TITLE", listReminderCategory[1])
+            startActivity(intent)
         }
         binding.priorityButton.setOnClickListener {
-            startActivity(Intent(this, ReminderHighPage::class.java))
+            val intent=Intent(this, ReminderPage::class.java)
+            intent.putExtra("TITLE", listReminderCategory[2])
+            startActivity(intent)
         }
+
+
         binding.newReminder.setOnClickListener {
             bindingBS.submit.text = "Set up reminder"
             setupNewReminder()
@@ -121,6 +131,9 @@ class MainActivity : AppCompatActivity() {
                 bindingBS.timeEditText.text =
                     "${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
             }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
+        }
+        bindingBS.goBackButton.setOnClickListener {
+            notesActivity?.dismiss()
         }
 
     }
@@ -203,6 +216,7 @@ class MainActivity : AppCompatActivity() {
         bindingBS.submit.setOnClickListener {
             insertEntityDB()
             setTexts()
+            notesActivity?.dismiss()
         }
 
     }
