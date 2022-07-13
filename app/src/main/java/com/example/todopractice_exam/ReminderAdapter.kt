@@ -41,11 +41,19 @@ class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>
         holder.name.text = listReminder[position].name
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = listReminder[position].date
-        holder.date.text = "${calendar.get(Calendar.DAY_OF_MONTH)}.${calendar.get(Calendar.MONTH)}.${calendar.get(Calendar.YEAR)}"
+        holder.date.text = "${calendar.get(Calendar.DAY_OF_MONTH)}.${calendar.get(Calendar.MONTH)+1}.${calendar.get(Calendar.YEAR)}"
 
         @RequiresApi(Build.VERSION_CODES.N)
         if (listReminder[position].date < today()) {
             holder.name.text = Html.fromHtml("<strike>${holder.name.text}</strike>", Html.FROM_HTML_MODE_LEGACY)
+        }
+
+        if(listReminder[position].priority=="High"){
+            holder.priority_color.setImageResource(R.drawable.info_icon_high)
+        }else if(listReminder[position].priority=="Medium"){
+            holder.priority_color.setImageResource(R.drawable.info_icon_medium)
+        }else{
+            holder.priority_color.setImageResource(R.drawable.info_icon_low)
         }
 
     }
@@ -57,6 +65,7 @@ class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>
     inner class ReminderViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         val name: TextView = view.findViewById(R.id.reminder_name)
         val date: TextView = view.findViewById(R.id.reminder_date)
+        val priority_color: ImageButton=view.findViewById(R.id.info)
 
 
 

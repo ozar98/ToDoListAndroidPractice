@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">ToDoPractice_exam</string>
+
+    <string-array name="Priorities">
+        <item>Low</item>
+        <item>Medium</item>
+        <item>High</item>
+    </string-array>
 </resources>

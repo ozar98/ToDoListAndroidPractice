@@ -81,7 +81,8 @@
                     android:layout_height="wrap_content"
                     android:text="Choose Time"
                     android:textSize="16sp"
-                    android:padding="2dp"
+                    android:padding="4dp"
+
                     android:textColor="@color/black"
                     android:layout_marginStart="8dp"
                     android:id="@+id/chooseTime"
@@ -112,7 +113,7 @@
                     android:text="Choose date"
                     android:textSize="16sp"
                     android:textColor="@color/black"
-                    android:padding="2dp"
+                    android:padding="4dp"
                     android:id="@+id/chooseDate"
                     android:layout_marginStart="8dp"
                     android:background="@drawable/button_design"/>
@@ -145,22 +146,23 @@
                 android:id="@+id/location_edit_text"
                 android:hint="Location"
                 android:textSize="20sp"
+                android:layout_marginTop="16dp"
                 android:textColorHint="@color/light_gray"
                 android:textColor="@color/white"
                 android:paddingStart="8dp"
                 android:layout_marginHorizontal="8dp"
                 android:background="@drawable/design_layout"/>
-            <EditText
+            <Spinner
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="30dp"
                 android:id="@+id/priority_edit_text"
                 android:textColor="@color/white"
-                android:textColorHint="@color/light_gray"
                 android:textSize="20sp"
+                android:background="@drawable/design_spinner"
                 android:paddingStart="8dp"
+                android:entries="@array/Priorities"
                 android:layout_marginVertical="16dp"
                 android:layout_marginHorizontal="8dp"
-                android:background="@drawable/design_layout"
                 android:hint="Priority"/>
         </LinearLayout>
 

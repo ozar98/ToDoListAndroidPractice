@@ -1,10 +1,14 @@
 package com.example.todopractice_exam
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.ArrayAdapter
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.todopractice_exam.databinding.ActivityMainBinding
@@ -17,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
 
-class ReminderPage : AppCompatActivity() {
+class ReminderPageActivity : AppCompatActivity() {
 
     private val reminderAdapter=ReminderAdapter()
 
@@ -33,6 +37,8 @@ class ReminderPage : AppCompatActivity() {
 
     private lateinit var category:String
 
+    private lateinit var priority:List<String>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding=ActivityReminderPageBinding.inflate(layoutInflater)
@@ -44,6 +50,15 @@ class ReminderPage : AppCompatActivity() {
         binding.remindersRv.adapter = reminderAdapter
         notesActivity = BottomSheetDialog(this)
         notesActivity?.setContentView(bindingBS.root)
+
+        priority=resources.getStringArray(R.array.Priorities).toList()
+
+
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item, priority
+        )
+        bindingBS.priorityEditText.adapter = adapter
 
         category= getReminderTitle()!!
 
@@ -62,9 +77,9 @@ class ReminderPage : AppCompatActivity() {
             binding.deleteButton.setOnClickListener {
                 lifecycleScope.launch(Dispatchers.IO) {
                     viewModel.deleteReminder(id)
-                    val listRemainders = viewModel.getAllReminders()
+
                     withContext(Dispatchers.Main) {
-                        reminderAdapter.submitList(listRemainders)
+
                     }
                 }
             }
@@ -72,9 +87,15 @@ class ReminderPage : AppCompatActivity() {
         reminderAdapter.onItemClick = {
             showReminder(it)
         }
+        chooseDateTime()
 
 
+    }
 
+    private fun observeLiveData() {
+        viewModel.allRemindersLB.observe(this) { reminders ->
+            reminderAdapter.submitList(reminders)
+        }
     }
     private fun setupNewReminder() {
         bindingBS.nameEditText.setText("")
@@ -82,7 +103,7 @@ class ReminderPage : AppCompatActivity() {
         bindingBS.dateEditText.text = ""
         bindingBS.timeEditText.text = ""
         bindingBS.locationEditText.setText("")
-        bindingBS.priorityEditText.setText("")
+
         notesActivity?.show()
         bindingBS.submit.setOnClickListener {
             insertEntityDB()
@@ -95,9 +116,7 @@ class ReminderPage : AppCompatActivity() {
         val reminder = setDataToReminder(0)
         CoroutineScope(Dispatchers.IO).launch {
             viewModel.insertNewReminder(reminder)
-            val listOfReminders = viewModel.getAllReminders()
             withContext(Dispatchers.Main) {
-                reminderAdapter.submitList(listOfReminders)
             }
 
         }
@@ -113,7 +132,7 @@ class ReminderPage : AppCompatActivity() {
 
         }
     }
-    suspend fun getList():List<Remainders>{
+    private suspend fun getList():List<Remainders>{
         var listOfReminders= listOf<Remainders>()
         when (category) {
             "Today's " -> {
@@ -151,7 +170,7 @@ class ReminderPage : AppCompatActivity() {
             bindingBS.descriptionEditText.text.toString(),
             calendar.timeInMillis,
             bindingBS.locationEditText.text.toString(),
-            bindingBS.priorityEditText.text.toString())
+            priority[bindingBS.priorityEditText.selectedItemPosition])
     }
     fun showReminder(id: Int) {
         notesActivity?.show()
@@ -172,7 +191,7 @@ class ReminderPage : AppCompatActivity() {
                 bindingBS.dateEditText.text = "${if (day < 10) "0$day" else day}.${if ((month + 1) < 10) "0${month + 1}" else month + 1}.$year"
                 bindingBS.timeEditText.text = "${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
                 bindingBS.locationEditText.setText(chosenReminder.location)
-                bindingBS.priorityEditText.setText(chosenReminder.priority)
+                bindingBS.priorityEditText.setSelection(priority.indexOf(chosenReminder.priority))
             }
         }
         bindingBS.submit.text = "Edit reminder"
@@ -188,4 +207,38 @@ class ReminderPage : AppCompatActivity() {
             }
         }
     }
+    private fun chooseDateTime(){
+        bindingBS.chooseDate.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            DatePickerDialog(
+                this,
+                { _, year, month, day ->
+                    bindingBS.dateEditText.text =
+                        "${if (day < 10) "0$day" else day}.${if ((month + 1) < 10) "0${month + 1}" else month + 1}.$year"
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+            ).show()
+        }
+        bindingBS.chooseTime.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            TimePickerDialog(this, { _, hour, minute ->
+
+                bindingBS.timeEditText.text =
+                    "${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
+        }
+    }
+
+    companion object {
+        private const val TITLE = "TITLE"
+
+        fun newIntent(context: Context, title: String): Intent {
+            val intent = Intent(context, ReminderPageActivity::class.java)
+            intent.putExtra(TITLE, title)
+            return intent
+        }
+    }
+
 }

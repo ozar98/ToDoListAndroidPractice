@@ -14,7 +14,7 @@
         android:theme="@style/Theme.ToDoPractice_exam"
         tools:targetApi="31">
         <activity
-            android:name=".ReminderPage"
+            android:name=".ReminderPageActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
