@@ -55,31 +55,9 @@ class MainActivity : AppCompatActivity() {
         binding.remindersRv.adapter = reminderAdapter
         observeLiveData()
 
-        priority=resources.getStringArray(R.array.Priorities).toList()
+        setupSpinner()
 
-        val adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item, priority
-        )
-        bindingBS.priorityEditText.adapter = adapter
-
-        reminderAdapter.onItemClick = {
-            showReminder(it)
-        }
-
-        var counterSelected = 0
-        reminderAdapter.onCheckBoxClick = { id, isChecked ->
-            counterSelected += if (isChecked) 1 else -1
-
-            binding.deleteButton.visibility = if (counterSelected == 1) VISIBLE else GONE
-
-            binding.deleteButton.setOnClickListener {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    viewModel.deleteReminder(id)
-
-                }
-            }
-        }
+        adapterClicks()
         setButtonsClick()
     }
 
@@ -95,6 +73,25 @@ class MainActivity : AppCompatActivity() {
         }
         viewModel.countTodayReminders.observe(this){
             binding.countToday.text=it.toString()
+        }
+    }
+    private fun adapterClicks(){
+        var counterSelected=0
+        reminderAdapter.onCheckBoxClick = { id, isChecked ->
+            counterSelected += if (isChecked) 1 else -1
+
+            binding.deleteButton.visibility = if (counterSelected == 1) VISIBLE else GONE
+
+            binding.deleteButton.setOnClickListener {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    viewModel.deleteReminder(id)
+
+                }
+            }
+        }
+
+        reminderAdapter.onItemClick = {
+            showReminderAndUpdate(it)
         }
     }
 
@@ -127,30 +124,38 @@ class MainActivity : AppCompatActivity() {
             setupNewReminder()
         }
         bindingBS.chooseDate.setOnClickListener {
-            val calendar = Calendar.getInstance()
-            DatePickerDialog(
-                this,
-                { _, year, month, day ->
-                    bindingBS.dateEditText.text =
-                        "${if (day < 10) "0$day" else day}.${if ((month + 1) < 10) "0${month + 1}" else month + 1}.$year"
-                },
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
-            ).show()
+            chooseDate()
         }
         bindingBS.chooseTime.setOnClickListener {
-            val calendar = Calendar.getInstance()
-            TimePickerDialog(this, { _, hour, minute ->
-
-                bindingBS.timeEditText.text =
-                    "${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
-            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
+            chooseTime()
         }
         bindingBS.goBackButton.setOnClickListener {
             notesActivity?.dismiss()
         }
 
+    }
+
+    private fun chooseDate(){
+        val calendar = Calendar.getInstance()
+        DatePickerDialog(
+            this,
+            { _, year, month, day ->
+                bindingBS.dateEditText.text =
+                    "${if (day < 10) "0$day" else day}.${if ((month + 1) < 10) "0${month + 1}" else month + 1}.$year"
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).show()
+    }
+
+    private fun chooseTime(){
+        val calendar = Calendar.getInstance()
+        TimePickerDialog(this, { _, hour, minute ->
+
+            bindingBS.timeEditText.text =
+                "${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
+        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
     }
 
     private fun launchReminderPageActivity(title: String) {
@@ -163,8 +168,13 @@ class MainActivity : AppCompatActivity() {
 
 
     @SuppressLint("SetTextI18n")
-    fun showReminder(id: Int) {
+    fun showReminderAndUpdate(id: Int) {
         notesActivity?.show()
+        getChosenReminder(id)
+        bindingBS.submit.text = "Edit reminder"
+        updateReminder(id)
+    }
+    private fun getChosenReminder(id: Int){
         CoroutineScope(Dispatchers.IO).launch {
             val chosenReminder = viewModel.getChosenReminder(id)
             withContext(Dispatchers.Main) {
@@ -187,7 +197,8 @@ class MainActivity : AppCompatActivity() {
                 bindingBS.priorityEditText.setSelection(priority.indexOf(chosenReminder.priority))
             }
         }
-        bindingBS.submit.text = "Edit reminder"
+    }
+    private fun updateReminder(id: Int){
         bindingBS.submit.setOnClickListener {
             val reminder = setDataToReminder(id)
             CoroutineScope(Dispatchers.IO).launch {
@@ -196,9 +207,9 @@ class MainActivity : AppCompatActivity() {
                     notesActivity?.dismiss()
                 }
             }
-
         }
     }
+
 
 
     private fun setupNewReminder() {
@@ -244,6 +255,15 @@ class MainActivity : AppCompatActivity() {
             bindingBS.locationEditText.text.toString(),
             priority[bindingBS.priorityEditText.selectedItemPosition]
         )
+    }
+    private fun setupSpinner(){
+        priority=resources.getStringArray(R.array.Priorities).toList()
+
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item, priority
+        )
+        bindingBS.priorityEditText.adapter = adapter
     }
 
 }

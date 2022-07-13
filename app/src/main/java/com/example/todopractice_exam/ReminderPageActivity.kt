@@ -51,6 +51,42 @@ class ReminderPageActivity : AppCompatActivity() {
         notesActivity = BottomSheetDialog(this)
         notesActivity?.setContentView(bindingBS.root)
 
+        setPriority()
+
+
+        binding.goBackButton.setOnClickListener {
+            finish()
+        }
+        adapterClickS()
+        chooseDateTime()
+        observeLiveData()
+        getCategory()
+
+    }
+
+    private fun getCategory() {
+        category= getReminderTitle()!!
+
+        if (category != null) {
+            getListReminder()
+        }
+    }
+
+    private fun adapterClickS() {
+        var counterSelected = 0
+        reminderAdapter.onCheckBoxClick = { id, isChecked ->
+            counterSelected += if (isChecked) 1 else -1
+
+            binding.deleteButton.visibility = if (counterSelected == 1) View.VISIBLE else View.GONE
+
+
+        }
+        reminderAdapter.onItemClick = {
+            showReminder(it)
+        }
+    }
+
+    private fun setPriority() {
         priority=resources.getStringArray(R.array.Priorities).toList()
 
 
@@ -59,37 +95,6 @@ class ReminderPageActivity : AppCompatActivity() {
             android.R.layout.simple_spinner_item, priority
         )
         bindingBS.priorityEditText.adapter = adapter
-
-        category= getReminderTitle()!!
-
-        if (category != null) {
-            getListReminder()
-        }
-        binding.goBackButton.setOnClickListener {
-            finish()
-        }
-        var counterSelected = 0
-        reminderAdapter.onCheckBoxClick = { id, isChecked ->
-            counterSelected += if (isChecked) 1 else -1
-
-            binding.deleteButton.visibility = if (counterSelected == 1) View.VISIBLE else View.GONE
-
-            binding.deleteButton.setOnClickListener {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    viewModel.deleteReminder(id)
-
-                    withContext(Dispatchers.Main) {
-
-                    }
-                }
-            }
-        }
-        reminderAdapter.onItemClick = {
-            showReminder(it)
-        }
-        chooseDateTime()
-
-
     }
 
     private fun observeLiveData() {
@@ -97,31 +102,11 @@ class ReminderPageActivity : AppCompatActivity() {
             reminderAdapter.submitList(reminders)
         }
     }
-    private fun setupNewReminder() {
-        bindingBS.nameEditText.setText("")
-        bindingBS.descriptionEditText.setText("")
-        bindingBS.dateEditText.text = ""
-        bindingBS.timeEditText.text = ""
-        bindingBS.locationEditText.setText("")
 
-        notesActivity?.show()
-        bindingBS.submit.setOnClickListener {
-            insertEntityDB()
-            notesActivity?.dismiss()
-        }
 
-    }
 
-    private fun insertEntityDB() {
-        val reminder = setDataToReminder(0)
-        CoroutineScope(Dispatchers.IO).launch {
-            viewModel.insertNewReminder(reminder)
-            withContext(Dispatchers.Main) {
-            }
-
-        }
-    }
     private fun getListReminder() {
+
         CoroutineScope(Dispatchers.IO).launch {
 
             val listOfReminders=getList()
@@ -146,7 +131,6 @@ class ReminderPageActivity : AppCompatActivity() {
         return listOfReminders
     }
     private fun getReminderTitle(): String? {
-        val intent = Intent()
         val category = getIntent().getStringExtra("TITLE")
         return category
 
