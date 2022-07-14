@@ -100,11 +100,13 @@ class MainActivity : AppCompatActivity() {
            if (isChecked){
            viewModel.getHighPriorityFirst.observe(this){reminders->
                 reminderAdapter.submitList(reminders)
+                binding.sortedby.text="Sorted By High Priority"
             }
             }else{
             viewModel.remindersLV.observe(this) { reminders ->
                 reminderAdapter.submitList(reminders)
                 }
+            binding.sortedby.text=""
             }
        }
     }
