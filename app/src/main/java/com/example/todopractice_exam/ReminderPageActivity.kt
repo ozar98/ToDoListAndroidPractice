@@ -35,7 +35,7 @@ class ReminderPageActivity : AppCompatActivity() {
 
     private lateinit var viewModel: ReminderPageViewModel
 
-    private lateinit var category:String
+    private var category: String? = null
 
     private lateinit var priority:List<String>
 
@@ -48,24 +48,22 @@ class ReminderPageActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this)[ReminderPageViewModel::class.java]
 
         binding.remindersRv.adapter = reminderAdapter
+
         notesActivity = BottomSheetDialog(this)
         notesActivity?.setContentView(bindingBS.root)
-
-        setPriority()
-
 
         binding.goBackButton.setOnClickListener {
             finish()
         }
+        setPriority()
         adapterClickS()
         chooseDateTime()
-        observeLiveData()
         getCategory()
 
     }
 
     private fun getCategory() {
-        category= getReminderTitle()!!
+        category = getReminderTitle()
 
         if (category != null) {
             getListReminder()
@@ -74,13 +72,12 @@ class ReminderPageActivity : AppCompatActivity() {
 
     private fun adapterClickS() {
         var counterSelected = 0
-        reminderAdapter.onCheckBoxClick = { id, isChecked ->
+        reminderAdapter.onCheckBoxClick = { _, isChecked ->
             counterSelected += if (isChecked) 1 else -1
 
             binding.deleteButton.visibility = if (counterSelected == 1) View.VISIBLE else View.GONE
-
-
         }
+
         reminderAdapter.onItemClick = {
             showReminder(it)
         }
@@ -97,11 +94,7 @@ class ReminderPageActivity : AppCompatActivity() {
         bindingBS.priorityEditText.adapter = adapter
     }
 
-    private fun observeLiveData() {
-        viewModel.allRemindersLB.observe(this) { reminders ->
-            reminderAdapter.submitList(reminders)
-        }
-    }
+
 
 
 
@@ -135,6 +128,7 @@ class ReminderPageActivity : AppCompatActivity() {
         return category
 
     }
+
     private fun setDataToReminder(id: Int): Remainders {
         val date = bindingBS.dateEditText.text.toString()
         val time = bindingBS.timeEditText.text.toString()
@@ -156,7 +150,8 @@ class ReminderPageActivity : AppCompatActivity() {
             bindingBS.locationEditText.text.toString(),
             priority[bindingBS.priorityEditText.selectedItemPosition])
     }
-    fun showReminder(id: Int) {
+
+    private fun showReminder(id: Int) {
         notesActivity?.show()
         CoroutineScope(Dispatchers.IO).launch {
             val chosenReminder = viewModel.getChosenReminder(id)
@@ -181,6 +176,7 @@ class ReminderPageActivity : AppCompatActivity() {
         bindingBS.submit.text = "Edit reminder"
         bindingBS.submit.setOnClickListener {
             val reminder = setDataToReminder(id)
+
             CoroutineScope(Dispatchers.IO).launch {
                 viewModel.updateReminder(reminder)
                 val listOfReminders = getList()
@@ -191,6 +187,7 @@ class ReminderPageActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun chooseDateTime(){
         bindingBS.chooseDate.setOnClickListener {
             val calendar = Calendar.getInstance()

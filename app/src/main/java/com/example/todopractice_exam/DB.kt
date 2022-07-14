@@ -53,6 +53,8 @@ interface MyDao {
     @Query("SELECT * FROM Remainders ORDER BY CASE WHEN priority=:priority THEN 1 WHEN priority= 'Medium' THEN 2 ELSE 3 END ")
     suspend fun getHighPriorityFirst(priority: String = "High"): List<Remainders>
 
+    @Query("SELECT * FROM Remainders where name LIKE '%' || :string || '%' ")
+    fun getFoundRemainder(string: String):LiveData<List<Remainders>>
 
     @Insert
     fun insertNewRemainder(reminder: Remainders)

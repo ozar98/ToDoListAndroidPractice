@@ -1,8 +1,12 @@
 package com.example.todopractice_exam
 
 import android.annotation.SuppressLint
+import android.app.AlarmManager
 import android.app.DatePickerDialog
+import android.app.PendingIntent
 import android.app.TimePickerDialog
+import android.content.Context
+import android.content.Intent
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -11,6 +15,7 @@ import android.view.View.GONE
 
 import android.view.View.VISIBLE
 import android.widget.ArrayAdapter
+import androidx.core.widget.doOnTextChanged
 
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -59,12 +64,16 @@ class MainActivity : AppCompatActivity() {
 
         adapterClicks()
         setButtonsClick()
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        binding.search.setText("")
     }
 
     private fun observeLiveData() {
-        viewModel.remindersLV.observe(this) { reminders ->
-            reminderAdapter.submitList(reminders)
-        }
+
         viewModel.countAllReminders.observe(this){
             binding.countAll.text=it.toString()
         }
@@ -73,6 +82,18 @@ class MainActivity : AppCompatActivity() {
         }
         viewModel.countTodayReminders.observe(this){
             binding.countToday.text=it.toString()
+        }
+        binding.search.setText("")
+        binding.search.doOnTextChanged { text, _, _, _ ->
+            if (text.toString()!="") {
+                viewModel.getRequestedReminder(text.toString()).observe(this){ reminders ->
+                    reminderAdapter.submitList(reminders)
+                }
+            }else{
+                viewModel.remindersLV.observe(this) { reminders ->
+                    reminderAdapter.submitList(reminders)
+                }
+            }
         }
     }
     private fun adapterClicks(){
@@ -152,7 +173,6 @@ class MainActivity : AppCompatActivity() {
     private fun chooseTime(){
         val calendar = Calendar.getInstance()
         TimePickerDialog(this, { _, hour, minute ->
-
             bindingBS.timeEditText.text =
                 "${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
         }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
@@ -163,9 +183,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(it)
         }
     }
-
-
-
 
     @SuppressLint("SetTextI18n")
     fun showReminderAndUpdate(id: Int) {
@@ -204,11 +221,15 @@ class MainActivity : AppCompatActivity() {
             CoroutineScope(Dispatchers.IO).launch {
                 viewModel.updateReminder(reminder)
                 withContext(Dispatchers.Main) {
+                    scheduleNotification()
                     notesActivity?.dismiss()
                 }
             }
         }
     }
+
+
+
 
 
 
@@ -222,9 +243,13 @@ class MainActivity : AppCompatActivity() {
         notesActivity?.show()
         bindingBS.submit.setOnClickListener {
             insertEntityDB()
-
+            scheduleNotification()
             notesActivity?.dismiss()
         }
+
+    }
+
+    private fun scheduleNotification() {
 
     }
 
@@ -265,5 +290,6 @@ class MainActivity : AppCompatActivity() {
         )
         bindingBS.priorityEditText.adapter = adapter
     }
+
 
 }

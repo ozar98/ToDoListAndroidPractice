@@ -44,7 +44,7 @@ class ReminderAdapter : RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder>
         holder.date.text = "${calendar.get(Calendar.DAY_OF_MONTH)}.${calendar.get(Calendar.MONTH)+1}.${calendar.get(Calendar.YEAR)}"
 
         @RequiresApi(Build.VERSION_CODES.N)
-        if (listReminder[position].date < today()) {
+        if (listReminder[position].date < today()) {1
             holder.name.text = Html.fromHtml("<strike>${holder.name.text}</strike>", Html.FROM_HTML_MODE_LEGACY)
         }
 
