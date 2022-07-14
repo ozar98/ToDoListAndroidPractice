@@ -50,8 +50,7 @@ interface MyDao {
     @Query("SELECT * FROM Remainders where priority=:priority")
     fun getHighPriority(priority: String="High"):List<Remainders>
 
-    @Query("SELECT * FROM Remainders ORDER BY CASE WHEN priority=:priority THEN 1 WHEN priority= 'Medium' THEN 2 ELSE 3 END ")
-    suspend fun getHighPriorityFirst(priority: String = "High"): List<Remainders>
+
 
     @Query("SELECT * FROM Remainders where name LIKE '%' || :string || '%' ")
     fun getFoundRemainder(string: String):LiveData<List<Remainders>>
@@ -74,6 +73,9 @@ interface MyDao {
 
     @Query("SELECT COUNT(id) from remainders where priority=:priority")
     fun countHighPriorityReminder(priority: String = "High"): LiveData<Int>
+
+    @Query("SELECT * FROM Remainders ORDER BY CASE WHEN priority=:priority THEN 1 WHEN priority= 'Medium' THEN 2 ELSE 3 END ")
+    fun getHighPriorityFirst(priority: String = "High"): LiveData<List<Remainders>>
 
 
     //Queries with LiveData

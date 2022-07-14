@@ -66,6 +66,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val countTodayReminders: LiveData<Int> = dao.countToday(today())
     val countHighPriorityReminders: LiveData<Int> = dao.countHighPriorityReminder()
     val countAllReminders: LiveData<Int> = dao.countAll()
+    val getHighPriorityFirst:LiveData<List<Remainders>> =dao.getHighPriorityFirst()
 
     fun getRequestedReminder(string: String): LiveData<List<Remainders>>{
         return dao.getFoundRemainder(string)

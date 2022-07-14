@@ -15,6 +15,7 @@ import android.view.View.GONE
 
 import android.view.View.VISIBLE
 import android.widget.ArrayAdapter
+import android.widget.Switch
 import androidx.core.widget.doOnTextChanged
 
 import androidx.lifecycle.ViewModelProvider
@@ -95,6 +96,17 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+       binding.switchPriority.setOnCheckedChangeListener { _, isChecked ->
+           if (isChecked){
+           viewModel.getHighPriorityFirst.observe(this){reminders->
+                reminderAdapter.submitList(reminders)
+            }
+            }else{
+            viewModel.remindersLV.observe(this) { reminders ->
+                reminderAdapter.submitList(reminders)
+                }
+            }
+       }
     }
     private fun adapterClicks(){
         var counterSelected=0
